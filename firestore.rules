@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Check if the request is from an authenticated user
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if the authenticated user's UID matches the target user document ID
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profile document
+    // Only the authenticated owner can read, create, or update their own profile
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // User's private medical documents subcollection
+      // Strictly isolated so each user can read, create, update, and delete ONLY their own documents
+      match /documents/{documentId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Any other subcollections created under the user's document
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Secure default: Deny all other access to any unauthorized collections or documents
+    match /{document=**} {
+      allow read, write: false;
+    }
+  }
+}

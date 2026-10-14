@@ -1,0 +1,20 @@
+# Netlify Build & Routing Configuration for MediMate AI Frontend
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# Keep API requests out of the SPA fallback and route them to the Netlify Function.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# SPA fallback rule for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# The Netlify function at /api/* forwards requests to BACKEND_URL server-side.
+# Set BACKEND_URL in Netlify's environment variables to the Flask service base URL.
